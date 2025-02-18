@@ -81,6 +81,8 @@ const Home = () => {
 	const [ position, setPosition ] = useState(starting_position);
 	const [ board, setBoard ] = useState(initBoard());
 	const [ player_ch, setPlayer_ch ] = useState('@');
+	const [ mode, setMode ] = useState('normal');
+	const [ message, setMessage ] = useState('');
 	const previousPositionRef = useRef(position);
 
 	const boardToString = (board) => {
@@ -91,6 +93,14 @@ const Home = () => {
 		// Add player
 		_board[position.y][position.x] = player_ch;
 
+		// Add message
+		if(mode === 'typing') {
+			_board[board_height-1][0] = ':';
+			for(let i=0; i<message.length; i++)
+				_board[board_height-1][i+1] = message[i];
+		}
+
+		// Construct display string
 		let out = '';
 		for(let i=0; i<board_height-1; i++) {
 			for(let j=0; j<board_width; j++)
@@ -124,7 +134,7 @@ const Home = () => {
 			});
 		}
 
-		const handleKeyDown = (e) => {
+		const normalControls = (e) => {
 			switch(e.key) {
 				case 'h':
 					move(-1, 0);
@@ -138,18 +148,63 @@ const Home = () => {
 				case 'l':
 					move(1, 0);
 					break;
+				case ':':
+					setMode(prev => 'typing');
+					break;
 			}
 		}
-		window.addEventListener('keydown', handleKeyDown);
 
-		return () => {
-			window.removeEventListeneer('keydown', handleKeyDown);
-		};
-	}, []);
+		const typingControls = (e) => {
+			const allow_specials = [ 'Escape', 'Backspace', 'Enter' ];
+			if(e.key.length > 1 && !allow_specials.includes(e.key))
+				return;
+
+			switch(e.key) {
+				case 'Escape':
+					setMode(prev => 'normal');
+					break;
+				case 'Backspace':
+					setMessage(prev => prev.slice(0, prev.length-1));
+					break;
+				case 'Shift':
+				case 'Control':
+				case 'Alt':
+				case 'Meta':
+				case 'Tab':
+				case 'NumLock':
+				case 'Delete':
+				case 'PageUp':
+				case 'PageDown':
+				case 'CapsLock':
+				case 'ArrowLeft':
+				case 'ArrowRight':
+				case 'ArrowUp':
+				case 'ArrowDown':
+				case '':
+				case '':
+				case '':
+					break;
+				default:
+					setMessage(prev => prev + e.key);
+					break;
+			}
+		}
+
+		if(mode === 'normal') {
+			window.addEventListener('keydown', normalControls);
+			return () => window.removeEventListener('keydown', normalControls);
+		}
+		else {
+			window.addEventListener('keydown', typingControls);
+			return () => window.removeEventListener('keydown', typingControls);
+		}
+
+
+	}, [mode]);
 
 	useEffect(() => {
 		setDisplayString(boardToString(board));
-	}, [position]);
+	}, [position, message, mode]);
 
 	useEffect(() => {
 	}, [board]);
