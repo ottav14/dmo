@@ -83,6 +83,7 @@ const Home = () => {
 	const [ player_ch, setPlayer_ch ] = useState('@');
 	const [ mode, setMode ] = useState('normal');
 	const [ message, setMessage ] = useState('');
+	const [ activeMessages, setActiveMessages ] = useState([]);
 	const previousPositionRef = useRef(position);
 
 	const boardToString = (board) => {
@@ -93,11 +94,19 @@ const Home = () => {
 		// Add player
 		_board[position.y][position.x] = player_ch;
 
-		// Add message
+		// Add message being typed
 		if(mode === 'typing') {
 			_board[board_height-1][0] = ':';
 			for(let i=0; i<message.length; i++)
 				_board[board_height-1][i+1] = message[i];
+		}
+
+		// Add typed messages
+		for(const msg of activeMessages) {
+			for(let i=0; i<msg.text.length; i++) {
+				_board[msg.y-1][msg.x+1] = '/';
+				_board[msg.y-2][msg.x+i+2] = msg.text[i];
+			}
 		}
 
 		// Construct display string
@@ -134,6 +143,15 @@ const Home = () => {
 			});
 		}
 
+		const addMessage = (msg) => {
+
+			setActiveMessages(prev => [...prev, msg]);
+
+			setTimeout(() => {
+				setActiveMessages(prev => prev.slice(0, prev.length-1));
+			}, 2000);
+		}
+
 		const normalControls = (e) => {
 			switch(e.key) {
 				case 'h':
@@ -166,23 +184,14 @@ const Home = () => {
 				case 'Backspace':
 					setMessage(prev => prev.slice(0, prev.length-1));
 					break;
-				case 'Shift':
-				case 'Control':
-				case 'Alt':
-				case 'Meta':
-				case 'Tab':
-				case 'NumLock':
-				case 'Delete':
-				case 'PageUp':
-				case 'PageDown':
-				case 'CapsLock':
-				case 'ArrowLeft':
-				case 'ArrowRight':
-				case 'ArrowUp':
-				case 'ArrowDown':
-				case '':
-				case '':
-				case '':
+				case 'Enter':
+					addMessage({
+						text: message,
+						x: position.x,
+						y: position.y
+					});
+					setMessage(prev => '');
+					setMode(prev => 'normal');
 					break;
 				default:
 					setMessage(prev => prev + e.key);
@@ -199,18 +208,14 @@ const Home = () => {
 			return () => window.removeEventListener('keydown', typingControls);
 		}
 
-
-	}, [mode]);
+	}, [mode, message, position]);
 
 	useEffect(() => {
 		setDisplayString(boardToString(board));
-	}, [position, message, mode]);
+	}, [mode, message, position, activeMessages]);
 
 	useEffect(() => {
-	}, [board]);
-
-	useEffect(() => {
-	}, [displayString]);
+	}, [activeMessages]);
 
 
 	return (
