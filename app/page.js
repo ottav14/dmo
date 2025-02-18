@@ -5,11 +5,10 @@ import { Share_Tech_Mono } from 'next/font/google';
 import { useState, useEffect, useRef } from 'react';
 import styles from './page.module.css';
 
-const board_width = 15;
-const board_height = 10;
+const board_width = 40;
+const board_height = 20;
 
-const player_ch = '@';
-
+const starting_position = { x: 5, y: 5 };
 
 const Home = () => {
 
@@ -23,24 +22,44 @@ const Home = () => {
 			board[i][x] = '|';
 	}
 
+	const drawRoom = (x, y, w, h, doors, board) => {
+		drawVLine(y, y+h-1, x,     board);
+		drawVLine(y, y+h-1, x+w-1, board);
+		drawHLine(x, x+w-1, y,     board);
+		drawHLine(x, x+w-1, y+h-1, board);
+
+		for(const door of doors) {
+			switch(door.direction) {
+				case 'left':
+					board[y+door.index][x] = '+';
+					break;
+				case 'right':
+					board[y+door.index][x+w-1] = '+';
+					break;
+				case 'up':
+					board[y][x+door.index] = '+';
+					break;
+				case 'down':
+					board[y+h-1][x+door.index] = '+';
+					break;
+			}
+		}
+	}
+
 	const initBoard = () => {
 		const newBoard = Array(board_height).fill().map(() => Array(board_width).fill(' '));
 
-		drawVLine(3, 9, 3, newBoard);
-		drawVLine(3, 9, 9, newBoard);
-		drawHLine(3, 9, 3, newBoard);
-		drawHLine(3, 9, 9, newBoard);
-
-		newBoard[3][6] = ' ';
+		drawRoom(3, 3, 7, 7, [{ direction: 'right', index: 3 }], newBoard);
+		drawRoom(20, 10, 7, 7, [{ direction: 'up', index: 3 }], newBoard);
 
 		return newBoard;
 	}
 
 	const [ displayString, setDisplayString ] = useState('');
-	const [ position, setPosition ] = useState({ x: 0, y: 0 });
+	const [ position, setPosition ] = useState(starting_position);
 	const [ board, setBoard ] = useState(initBoard());
+	const [ player_ch, setPlayer_ch ] = useState('@');
 	const previousPositionRef = useRef(position);
-
 
 	const boardToString = (board) => {
 
@@ -64,8 +83,8 @@ const Home = () => {
 
 	const validPosition = (x, y) => {
 		const inBounds = x >= 0 && x < board_width && y >= 0 && y < board_height;
-		const isAir = inBounds && board[y][x] === ' ';
-		return inBounds && isAir;
+		const isWalkable = inBounds && (board[y][x] === ' ' || board[y][x] === '+');
+		return inBounds && isWalkable;
 	}
 
 	useEffect(() => {
