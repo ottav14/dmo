@@ -9,7 +9,7 @@ const board_width = 40;
 const board_height = 20;
 
 const starting_position = { x: 5, y: 5 };
-const walkables = [ ' ', '+', '#' ];
+const walkables = [ ' ', '+', '#', '.' ];
 
 const Home = () => {
 
@@ -28,6 +28,9 @@ const Home = () => {
 		drawVLine(y, y+h-1, x+w-1, board);
 		drawHLine(x, x+w-1, y,     board);
 		drawHLine(x, x+w-1, y+h-1, board);
+
+		for(let i=1; i<h-1; i++)
+			drawHLine(x+1, x+w-2, y+i, board, '.');
 
 		for(const door of doors) {
 			switch(door.direction) {
