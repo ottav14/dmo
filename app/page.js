@@ -8,6 +8,9 @@ import styles from './page.module.css';
 const board_width = 40;
 const board_height = 20;
 
+const ball_speed = 5;
+const ball_lifespan = 5;
+
 const starting_position = { x: 5, y: 5 };
 const walkables = [ ' ', '+', '#', '.' ];
 
@@ -87,6 +90,7 @@ const Home = () => {
 	const [ mode, setMode ] = useState('normal');
 	const [ message, setMessage ] = useState('');
 	const [ activeMessages, setActiveMessages ] = useState([]);
+	const [ activeBalls, setActiveBalls ] = useState([]);
 	const previousPositionRef = useRef(position);
 
 	const boardToString = (board) => {
@@ -112,6 +116,11 @@ const Home = () => {
 			}
 		}
 
+		// Add balls
+		for(const ball of activeBalls) {
+			_board[ball.y][ball.x] = 'O';
+		}
+
 		// Construct display string
 		let out = '';
 		for(let i=0; i<board_height-1; i++) {
@@ -129,6 +138,10 @@ const Home = () => {
 		const inBounds = x >= 0 && x < board_width && y >= 0 && y < board_height;
 		const isWalkable = inBounds && walkables.includes(board[y][x]);
 		return inBounds && isWalkable;
+	}
+	
+	const generateId = () => {
+		return `${Date.now()}-${Math.floor(Math.random()*1000000)}`;
 	}
 
 	useEffect(() => {
@@ -155,6 +168,60 @@ const Home = () => {
 			}, 2000);
 		}
 
+		const addBall = (xoff, yoff) => {
+			const ball = { 
+				x: position.x + xoff, 
+				y: position.y + yoff,
+				vx: xoff,
+				vy: yoff,
+				id: generateId()
+			};
+			setActiveBalls(prev => [...prev, ball]);
+
+			const intervalId = setInterval(() => {	
+				setActiveBalls(prev => {
+					const newBalls = [...prev];
+					let ix = 0;
+					for(let i=0; i<newBalls.length; i++) {
+						if(newBalls[i].id === ball.id) {
+							ix = i;
+							break;
+						}
+					}
+
+					const newX = newBalls[ix].x + newBalls[ix].vx;
+					const newY = newBalls[ix].y + newBalls[ix].vy;
+					if(newX >= board_width || newX < 0) {
+						newBalls[ix].vx *= -1;
+						newBalls[ix].x += 2 * newBalls[ix].vx;
+					}
+					else {
+						newBalls[ix].x += newBalls[ix].vx;
+					}
+					if(newY >= board_height || newY < 0) {
+						newBalls[ix].vy *= -1;
+						newBalls[ix].y += 2 * newBalls[ix].vy;
+					}
+					else {
+						newBalls[ix].y += newBalls[ix].vy;
+					}
+					
+					return newBalls;
+				});
+			}, 1000 / ball_speed);
+
+			setTimeout(() => {
+				clearInterval(intervalId);
+				setActiveBalls(prev => {
+					const newBalls = [...prev];
+					for(let i=0; i<newBalls.length; i++)
+						if(newBalls[i].id === ball.id)
+							newBalls.pop(i);
+					return newBalls;
+				});
+			}, 1000 * ball_lifespan);
+		}
+
 		const normalControls = (e) => {
 			switch(e.key) {
 				case 'h':
@@ -168,6 +235,9 @@ const Home = () => {
 					break;
 				case 'l':
 					move(1, 0);
+					break;
+				case 'b':
+					setMode(prev => 'throwing');
 					break;
 				case ':':
 					setMode(prev => 'typing');
@@ -202,23 +272,51 @@ const Home = () => {
 			}
 		}
 
-		if(mode === 'normal') {
-			window.addEventListener('keydown', normalControls);
-			return () => window.removeEventListener('keydown', normalControls);
+		const throwingControls = (e) => {
+			switch(e.key) {
+				case 'h':
+					addBall(-1, 0);
+					break;
+				case 'j':
+					addBall(0, 1);
+					break;
+				case 'k':
+					addBall(0, -1);
+					break;
+				case 'l':
+					addBall(1, 0);
+					break;
+				case 'Escape':
+					setMode(prev => 'normal');
+					break;
+			}
+			setMode(prev => 'normal');
 		}
-		else {
-			window.addEventListener('keydown', typingControls);
-			return () => window.removeEventListener('keydown', typingControls);
+
+		switch(mode) {
+			case 'normal':
+				window.addEventListener('keydown', normalControls);
+				return () => window.removeEventListener('keydown', normalControls);
+				break;
+			case 'throwing':
+				window.addEventListener('keydown', throwingControls);
+				return () => window.removeEventListener('keydown', throwingControls);
+				break;
+			case 'typing':
+				window.addEventListener('keydown', typingControls);
+				return () => window.removeEventListener('keydown', typingControls);
+				break;
 		}
 
 	}, [mode, message, position]);
 
 	useEffect(() => {
 		setDisplayString(boardToString(board));
-	}, [mode, message, position, activeMessages]);
+	}, [mode, message, position, activeMessages, activeBalls]);
 
 	useEffect(() => {
-	}, [activeMessages]);
+		console.log(activeBalls);
+	}, [activeBalls]);
 
 
 	return (
