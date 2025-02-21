@@ -4,12 +4,15 @@ import Image from 'next/image';
 import { Share_Tech_Mono } from 'next/font/google';
 import { useState, useEffect, useRef } from 'react';
 import styles from './page.module.css';
+import globalParams from './params.js';
+import addBall from './ball.js';
+import addMessage from './message.js';
+import boardToString from './render.js';
 
-const board_width = 40;
-const board_height = 20;
-
-const ball_speed = 5;
-const ball_lifespan = 5;
+const board_width = globalParams.board_width;
+const board_height = globalParams.board_height;
+const ball_speed = globalParams.ball_speed;
+const ball_lifespan = globalParams.ball_lifespan;
 
 const starting_position = { x: 5, y: 5 };
 const walkables = [ ' ', '+', '#', '.' ];
@@ -93,45 +96,16 @@ const Home = () => {
 	const [ activeBalls, setActiveBalls ] = useState([]);
 	const previousPositionRef = useRef(position);
 
-	const boardToString = (board) => {
-
-		// Clone board
-		const _board = board.map(row => [...row]);
-
-		// Add player
-		_board[position.y][position.x] = player_ch;
-
-		// Add message being typed
-		if(mode === 'typing') {
-			_board[board_height-1][0] = ':';
-			for(let i=0; i<message.length; i++)
-				_board[board_height-1][i+1] = message[i];
-		}
-
-		// Add typed messages
-		for(const msg of activeMessages) {
-			for(let i=0; i<msg.text.length; i++) {
-				_board[msg.y-1][msg.x+1] = '/';
-				_board[msg.y-2][msg.x+i+2] = msg.text[i];
-			}
-		}
-
-		// Add balls
-		for(const ball of activeBalls) {
-			_board[ball.y][ball.x] = 'O';
-		}
-
-		// Construct display string
-		let out = '';
-		for(let i=0; i<board_height-1; i++) {
-			for(let j=0; j<board_width; j++)
-				out += _board[i][j];
-			out += '\n';
-		}
-		for(let i=0; i<board_width; i++)
-			out += _board[board_height-1][i];
-
-		return out;
+	const state = {
+		position: position,
+		board: board,
+		mode: mode,
+		player_ch: player_ch,
+		message: message,
+		activeMessages: activeMessages,
+		activeBalls: activeBalls,
+		setActiveMessages: setActiveMessages,
+		setActiveBalls: setActiveBalls
 	}
 
 	const validPosition = (x, y) => {
@@ -140,9 +114,6 @@ const Home = () => {
 		return inBounds && isWalkable;
 	}
 	
-	const generateId = () => {
-		return `${Date.now()}-${Math.floor(Math.random()*1000000)}`;
-	}
 
 	useEffect(() => {
 
@@ -157,69 +128,6 @@ const Home = () => {
 				}
 				return prev;
 			});
-		}
-
-		const addMessage = (msg) => {
-
-			setActiveMessages(prev => [...prev, msg]);
-
-			setTimeout(() => {
-				setActiveMessages(prev => prev.slice(0, prev.length-1));
-			}, 2000);
-		}
-
-		const addBall = (xoff, yoff) => {
-			const ball = { 
-				x: position.x + xoff, 
-				y: position.y + yoff,
-				vx: xoff,
-				vy: yoff,
-				id: generateId()
-			};
-			setActiveBalls(prev => [...prev, ball]);
-
-			const intervalId = setInterval(() => {	
-				setActiveBalls(prev => {
-					const newBalls = [...prev];
-					let ix = 0;
-					for(let i=0; i<newBalls.length; i++) {
-						if(newBalls[i].id === ball.id) {
-							ix = i;
-							break;
-						}
-					}
-
-					const newX = newBalls[ix].x + newBalls[ix].vx;
-					const newY = newBalls[ix].y + newBalls[ix].vy;
-					if(newX >= board_width || newX < 0) {
-						newBalls[ix].vx *= -1;
-						newBalls[ix].x += 2 * newBalls[ix].vx;
-					}
-					else {
-						newBalls[ix].x += newBalls[ix].vx;
-					}
-					if(newY >= board_height || newY < 0) {
-						newBalls[ix].vy *= -1;
-						newBalls[ix].y += 2 * newBalls[ix].vy;
-					}
-					else {
-						newBalls[ix].y += newBalls[ix].vy;
-					}
-					
-					return newBalls;
-				});
-			}, 1000 / ball_speed);
-
-			setTimeout(() => {
-				clearInterval(intervalId);
-				setActiveBalls(prev => {
-					const newBalls = [...prev];
-					for(let i=0; i<newBalls.length; i++)
-						if(newBalls[i].id === ball.id)
-							newBalls.pop(i);
-					return newBalls;
-				});
-			}, 1000 * ball_lifespan);
 		}
 
 		const normalControls = (e) => {
@@ -262,7 +170,7 @@ const Home = () => {
 						text: message,
 						x: position.x,
 						y: position.y
-					});
+					}, state);
 					setMessage(prev => '');
 					setMode(prev => 'normal');
 					break;
@@ -275,16 +183,16 @@ const Home = () => {
 		const throwingControls = (e) => {
 			switch(e.key) {
 				case 'h':
-					addBall(-1, 0);
+					addBall(-1, 0, state);
 					break;
 				case 'j':
-					addBall(0, 1);
+					addBall(0, 1, state);
 					break;
 				case 'k':
-					addBall(0, -1);
+					addBall(0, -1, state);
 					break;
 				case 'l':
-					addBall(1, 0);
+					addBall(1, 0, state);
 					break;
 				case 'Escape':
 					setMode(prev => 'normal');
@@ -311,13 +219,8 @@ const Home = () => {
 	}, [mode, message, position]);
 
 	useEffect(() => {
-		setDisplayString(boardToString(board));
+		setDisplayString(boardToString(state));
 	}, [mode, message, position, activeMessages, activeBalls]);
-
-	useEffect(() => {
-		console.log(activeBalls);
-	}, [activeBalls]);
-
 
 	return (
 		<div className={styles.page}>
