@@ -1,0 +1,24 @@
+:root {
+	--background: #000;
+	--text: #fff;
+	--accent-1: #111;
+}
+
+* {
+	margin: 0;	
+}
+
+body {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100vw;
+	height: 100vh;
+	background: var(--background);
+}
+
+#container {
+	background-color: var(--accent-1);
+	color: var(--text);
+	font-size: 16pt;
+}
