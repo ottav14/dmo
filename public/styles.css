@@ -22,3 +22,20 @@ body {
 	color: var(--text);
 	font-size: 16pt;
 }
+
+#login {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-around;
+	align-items: center;
+	width: 25rem;
+	height: 10rem;
+	position: absolute;
+	background-color: #555;
+}
+
+#input {
+	width: 15rem;
+	height: 2rem;
+	background-color: #222;
+}
