@@ -38,7 +38,7 @@ const connectWS = (state) => {
 
 		if(type === 'disconnection') {
 			for(let i=0; i<state.otherPlayers.length; i++) {
-				if(state.otherPlayers[i].id === id) {
+				if(parseInt(state.otherPlayers[i].id) === id) {
 					state.otherPlayers.splice(i, 1);
 					updateBoard(state);
 				}

@@ -25,7 +25,7 @@ export const move = (state, xoff, yoff, webSocketServer) => {
 	}
 }
 
-export const walkingControls = (e, state, webSocketServer) => {
+const walkingControls = (e, state, webSocketServer) => {
 	switch(e.key) {
 		case 'ArrowLeft':
 		case 'a':
@@ -47,6 +47,32 @@ export const walkingControls = (e, state, webSocketServer) => {
 		case 'l':
 			move(state, 1, 0, webSocketServer);
 			break;
+		case ':':
+			state.mode = 'typing';
+			break;
+	}
+}
+
+const typingControls = (e, state, webSocketServer) => {
+	switch(e.key) {
+		case 'Enter':
+		case 'Escape':
+			state.message = '';
+			state.mode = 'walking';
+			break;
+		default:
+			if(e.key.length === 1)
+				state.message += e.key;
+	}
+}
+
+export const controls = (e, state, webSocketServer) => {
+	switch(state.mode) {
+		case 'walking':
+			walkingControls(e, state, webSocketServer);
+			break;
+		case 'typing': 
+			typingControls(e, state, webSocketServer);
 	}
 	updateBoard(state);
 }

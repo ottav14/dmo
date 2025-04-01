@@ -1,7 +1,7 @@
 import * as PARAMS from './params.js';
 import { updateBoard, initBoard } from './render.js';
 import connectWS from './connectWS.js';
-import { move, walkingControls } from './controls.js';
+import { move, controls } from './controls.js';
 
 const loginWindow = document.getElementById('login');
 const nameInput = document.getElementById('input');
@@ -16,7 +16,6 @@ const getName = (e) => {
 }
 nameInput.addEventListener('keypress', getName);
 
-
 const start = (name) => {
 	const state = {
 		name: name,
@@ -25,7 +24,7 @@ const start = (name) => {
 		position: { x: 10, y: 10 },
 		player_ch: '@',
 		mode: 'walking',
-		message: null,
+		message: '',
 		activeMessages: [],
 		activeBalls: [],
 		otherPlayers: []
@@ -37,5 +36,5 @@ const start = (name) => {
 
 	updateBoard(state);
 
-	document.addEventListener('keydown', (e) => walkingControls(e, state, webSocketServer));
+	document.addEventListener('keydown', (e) => controls(e, state, webSocketServer));
 }

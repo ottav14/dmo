@@ -68,14 +68,15 @@ export const drawVLine = (y0, y1, x, board, ch='|') => {
 		board[i][x] = ch;
 }
 
-export const drawRoom = (x, y, w, h, doors, board) => {
+export const drawRoom = (x, y, w, h, doors, board, fill=true) => {
 	drawVLine(y, y+h-1, x,     board);
 	drawVLine(y, y+h-1, x+w-1, board);
 	drawHLine(x, x+w-1, y,     board);
 	drawHLine(x, x+w-1, y+h-1, board);
 
-	for(let i=1; i<h-1; i++)
-		drawHLine(x+1, x+w-2, y+i, board, '.');
+	if(fill)
+		for(let i=1; i<h-1; i++)
+			drawHLine(x+1, x+w-2, y+i, board, '.');
 
 	for(const door of doors) {
 		switch(door.direction) {
@@ -105,7 +106,9 @@ export const drawPath = (points, board) => {
 }
 
 export const initBoard = () => {
-	const newBoard = Array(PARAMS.board_height).fill().map(() => Array(PARAMS.board_width).fill(' '));
+	const width = PARAMS.board_width;
+	const height = PARAMS.board_height;
+	const newBoard = Array(height).fill().map(() => Array(width).fill(' '));
 
 	drawRoom(3, 3, 7, 7, [{ direction: 'right', index: 3 }], newBoard);
 	drawRoom(20, 10, 7, 7, [{ direction: 'up', index: 3 }], newBoard);
@@ -140,6 +143,15 @@ export const initBoard = () => {
 	newBoard[21][59] = '+';
 	newBoard[22][58] = '+';
 	newBoard[23][57] = '+';
+
+	// Border
+	const borderWidth = width-15;
+	const borderHeight = height-2;
+	drawVLine(0, borderHeight, 0, newBoard);
+	drawVLine(0, height-1, borderWidth+1, newBoard);
+	drawVLine(0, height-1, width-1, newBoard);
+	drawHLine(0, width-1, 0, newBoard);
+	drawHLine(0, borderWidth, borderHeight, newBoard);
 
 	return newBoard;
 }
