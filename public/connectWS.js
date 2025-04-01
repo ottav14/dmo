@@ -15,7 +15,6 @@ const connectWS = (state) => {
 		if(type === 'initialGameState') {
 			const gameState = JSON.parse(data);
 			state.otherPlayers = gameState;
-			updateBoard(state);
 		}
 
 		if(type === 'position') {
@@ -23,7 +22,6 @@ const connectWS = (state) => {
 				console.log(state.otherPlayers[i].id, id);
 				if(parseInt(state.otherPlayers[i].id) === id) {
 					state.otherPlayers[i].position = data;
-					updateBoard(state);
 				}
 			}
 		}
@@ -33,17 +31,23 @@ const connectWS = (state) => {
 				id: id,
 				position: data
 			});
-			updateBoard(state);
 		}
 
-		if(type === 'disconnection') {
-			for(let i=0; i<state.otherPlayers.length; i++) {
-				if(parseInt(state.otherPlayers[i].id) === id) {
+		if(type === 'disconnection')
+			for(let i=0; i<state.otherPlayers.length; i++)
+				if(parseInt(state.otherPlayers[i].id) === id)
 					state.otherPlayers.splice(i, 1);
-					updateBoard(state);
-				}
+
+		if(type === 'message') {
+			const msg = {
+				name: data.name,
+				text: data.text
 			}
+			state.activeMessages.push(msg);
 		}
+
+
+		updateBoard(state);
 		console.log('Message from server:', JSON.parse(event.data));
 	};
 

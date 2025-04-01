@@ -53,12 +53,33 @@ const walkingControls = (e, state, webSocketServer) => {
 	}
 }
 
+const postMessage = (state, webSocketServer) => {
+	const msg = {
+		name: state.name,
+		text: state.message
+	}
+	state.activeMessages.push(msg); // Add new message client-side
+
+	// Reset message and mode
+	state.message = '';
+	state.mode = 'walking';
+
+	// Post to ws
+	const JSONmessage = { type: 'message', id: state.id, data: msg };
+	webSocketServer.send(JSON.stringify(JSONmessage));
+}
+
 const typingControls = (e, state, webSocketServer) => {
 	switch(e.key) {
 		case 'Enter':
+			postMessage(state, webSocketServer);
+			break;
 		case 'Escape':
 			state.message = '';
 			state.mode = 'walking';
+			break;
+		case 'Backspace':
+			state.message = state.message.slice(0, -1);
 			break;
 		default:
 			if(e.key.length === 1)

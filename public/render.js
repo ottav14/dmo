@@ -31,11 +31,19 @@ export const updateBoard = (state) => {
 	}
 
 	// Add typed messages
-	for(const msg of activeMessages) {
-		for(let i=0; i<msg.text.length; i++) {
-			_board[msg.y-1][msg.x+1] = '/';
-			_board[msg.y-2][msg.x+i+2] = msg.text[i];
-		}
+	for(let i=activeMessages.length-1; i>=0; i--) {
+		const x = PARAMS.border_width+2;
+		const y = 2*(activeMessages.length - i) - 1;
+
+		const name = activeMessages[i].name;
+		for(let j=0; j<name.length; j++)
+			_board[y][x+j] = name[j];
+
+		_board[y][x+name.length] = ':';
+
+		const msg = activeMessages[i].text;
+		for(let j=0; j<msg.length; j++)
+			_board[y][x+name.length+j+2] = msg[j];
 	}
 
 	// Add balls
@@ -145,8 +153,8 @@ export const initBoard = () => {
 	newBoard[23][57] = '+';
 
 	// Border
-	const borderWidth = width-15;
-	const borderHeight = height-2;
+	const borderWidth = PARAMS.border_width;
+	const borderHeight = PARAMS.border_height;
 	drawVLine(0, borderHeight, 0, newBoard);
 	drawVLine(0, height-1, borderWidth+1, newBoard);
 	drawVLine(0, height-1, width-1, newBoard);

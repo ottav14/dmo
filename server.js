@@ -67,6 +67,14 @@ wss.on('connection', async (ws, req) => {
 			await redis.hset(id, 'position', JSON.stringify(data));
 		}
 
+		if(type === 'message') {
+			clients.forEach(client => {
+				if(client !== ws && client.readyState === WebSocket.OPEN) {
+					client.send(JSON.stringify({ type: 'message', id: id, data: data }));
+				}
+			});
+		}
+
 	});
 
 	ws.on('close', () => {
