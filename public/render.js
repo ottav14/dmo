@@ -57,7 +57,9 @@ export const updateBoard = (state) => {
 }
 
 export const drawHLine = (x0, x1, y, board, ch='-') => {
-	for(let i=x0; i<=x1; i++)
+	const l = Math.min(x0, x1);
+	const r = Math.max(x0, x1);
+	for(let i=l; i<=r; i++)
 		board[y][i] = ch;
 }
 
@@ -99,8 +101,6 @@ export const drawPath = (points, board) => {
 			drawVLine(points[i].y, points[i+1].y, points[i].x, board, '#');
 		else if(points[i].y === points[i+1].y) 
 			drawHLine(points[i].x, points[i+1].x, points[i].y, board, '#');
-		else
-			return;
 	}
 }
 
@@ -109,14 +109,37 @@ export const initBoard = () => {
 
 	drawRoom(3, 3, 7, 7, [{ direction: 'right', index: 3 }], newBoard);
 	drawRoom(20, 10, 7, 7, [{ direction: 'up', index: 3 }], newBoard);
+	drawRoom(33, 11, 9, 7, [{ direction: 'up', index: 4 }], newBoard);
+	drawRoom(40, 1, 11, 7, [{ direction: 'left', index: 3 }], newBoard);
 
-	const path = [
-		{ x: 10,  y: 6  },
-		{ x: 23, y: 6  },
-		{ x: 23, y: 9 }
+	const paths = [
+		[ 
+			{ x: 10, y: 6 },
+			{ x: 23, y: 6 },
+			{ x: 23, y: 9 },
+		],
+		[
+			{ x: 39, y:  4 },
+			{ x: 37, y:  4 },
+			{ x: 37, y: 10 },
+		],
+		[
+			{ x: 23, y: 5 },
+			{ x: 37, y: 5 },
+		],
 	]; 
 
-	drawPath(path, newBoard);
+	for(const path of paths)
+		drawPath(path, newBoard);
+
+	// Outer walls
+	drawHLine(0, 56, 24, newBoard);
+	drawVLine(0, 20, 60, newBoard);
+
+	// Gate
+	newBoard[21][59] = '+';
+	newBoard[22][58] = '+';
+	newBoard[23][57] = '+';
 
 	return newBoard;
 }
