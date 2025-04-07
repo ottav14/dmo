@@ -2,6 +2,14 @@ import * as PARAMS from './params.js';
 
 export const updateBoard = (state) => {
 
+	if(state.board.length < 1)
+		return;
+
+	if(state.mode === 'loading') {
+		state.container.innerText = 'Loading...';
+		return;
+	}
+
 	const board = state.board;
 	const position = state.position;
 	const player_ch = state.player_ch;
@@ -46,10 +54,8 @@ export const updateBoard = (state) => {
 			_board[y][x+name.length+j+2] = msg[j];
 	}
 
-	// Add balls
-	for(const ball of activeBalls) {
-		_board[ball.y][ball.x] = 'O';
-	}
+	// Building block display
+	_board[PARAMS.board_height-2][PARAMS.board_width-2] = state.block;
 
 	// Construct display string
 	let out = '';
@@ -111,55 +117,4 @@ export const drawPath = (points, board) => {
 		else if(points[i].y === points[i+1].y) 
 			drawHLine(points[i].x, points[i+1].x, points[i].y, board, '#');
 	}
-}
-
-export const initBoard = () => {
-	const width = PARAMS.board_width;
-	const height = PARAMS.board_height;
-	const newBoard = Array(height).fill().map(() => Array(width).fill(' '));
-
-	drawRoom(3, 3, 7, 7, [{ direction: 'right', index: 3 }], newBoard);
-	drawRoom(20, 10, 7, 7, [{ direction: 'up', index: 3 }], newBoard);
-	drawRoom(33, 11, 9, 7, [{ direction: 'up', index: 4 }], newBoard);
-	drawRoom(40, 1, 11, 7, [{ direction: 'left', index: 3 }], newBoard);
-
-	const paths = [
-		[ 
-			{ x: 10, y: 6 },
-			{ x: 23, y: 6 },
-			{ x: 23, y: 9 },
-		],
-		[
-			{ x: 39, y:  4 },
-			{ x: 37, y:  4 },
-			{ x: 37, y: 10 },
-		],
-		[
-			{ x: 23, y: 5 },
-			{ x: 37, y: 5 },
-		],
-	]; 
-
-	for(const path of paths)
-		drawPath(path, newBoard);
-
-	// Outer walls
-	drawHLine(0, 56, 24, newBoard);
-	drawVLine(0, 20, 60, newBoard);
-
-	// Gate
-	newBoard[21][59] = '+';
-	newBoard[22][58] = '+';
-	newBoard[23][57] = '+';
-
-	// Border
-	const borderWidth = PARAMS.border_width;
-	const borderHeight = PARAMS.border_height;
-	drawVLine(0, borderHeight, 0, newBoard);
-	drawVLine(0, height-1, borderWidth+1, newBoard);
-	drawVLine(0, height-1, width-1, newBoard);
-	drawHLine(0, width-1, 0, newBoard);
-	drawHLine(0, borderWidth, borderHeight, newBoard);
-
-	return newBoard;
 }

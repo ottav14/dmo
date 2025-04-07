@@ -17,10 +17,30 @@ const wss = new WebSocket.Server({ server: httpsServer });
 const redis = new Redis();
 const clients = new Map();
 
-const clearRedis = async () => {
-	await redis.flushdb();
+const fetchBoard = async (x, y) => {
+	const board_width = 100;
+	const board_height = 40;
+	const redisBoardRes = await redis.hgetall(`board:${x},${y}`);
+	const board = Array(board_height).fill().map(() => Array(board_width).fill());
+	for(const [key, value] of Object.entries(redisBoardRes)) {
+		const [x, y] = key.split(',').map(Number);
+		board[y][x] = value;
+	}
+	return board;
 }
-clearRedis();
+
+const initBoard = async (x, y) => {
+	for(let i=0; i<40; i++)
+		for(let j=0; j<100; j++)
+			await redis.hset(`board:${x},${y}`, `${j},${i}`, ' ');
+}
+
+const initRedis = async () => {
+	await redis.flushdb();
+	await initBoard(0, 0);
+
+}
+initRedis();
 
 // Handle WebSocket connections
 wss.on('connection', async (ws, req) => {
@@ -32,12 +52,18 @@ wss.on('connection', async (ws, req) => {
 	const playerData = [];
 	if(keys) {
 		for(const key of keys) {
-			const data = await redis.hget(key, 'position');
-			const currentPos = JSON.parse(data);
-			playerData.push({ id: key, position: currentPos });
+			if(!key.startsWith('board')) {
+				const data = await redis.hget(key, 'position');
+				const currentPos = JSON.parse(data);
+				playerData.push({ id: key, position: currentPos });
+			}
 		}
 	}
-	const strdata = JSON.stringify(playerData);
+
+	const board = await fetchBoard(0, 0);
+
+	const gameState = { playerData: playerData, board: board };
+	const strdata = JSON.stringify(gameState);
 	ws.send(JSON.stringify({ type: 'initialGameState', id: parseInt(playerId), data: strdata })); // Send initial game state
 
 	const idMessage = { type: 'id', id: playerId, data: playerId };
@@ -67,12 +93,34 @@ wss.on('connection', async (ws, req) => {
 			await redis.hset(id, 'position', JSON.stringify(data));
 		}
 
+		if(type === 'block') {
+			clients.forEach(client => {
+				if(client !== ws && client.readyState === WebSocket.OPEN) {
+					client.send(JSON.stringify({ type: 'block', id: id, data: data }));
+				}
+			});
+			const x = data.position.x;
+			const y = data.position.y;
+			const boardX = data.boardPosition.x;
+			const boardY = data.boardPosition.y;
+			await redis.hset(`board:${boardX},${boardY}`, `${x},${y}`, data.ch);
+			console.log('location:', boardX, boardY);
+		}
+
 		if(type === 'message') {
 			clients.forEach(client => {
 				if(client !== ws && client.readyState === WebSocket.OPEN) {
 					client.send(JSON.stringify({ type: 'message', id: id, data: data }));
 				}
 			});
+		}
+
+		if(type === 'boardJump') {
+			if(!(await redis.exists(`board:${data.x},${data.y}`)))
+				await initBoard(data.x, data.y);
+
+			const newBoard = await fetchBoard(data.x, data.y);
+			ws.send(JSON.stringify({ type: 'board', id: id, data: newBoard }));
 		}
 
 	});

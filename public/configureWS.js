@@ -1,6 +1,6 @@
 import { updateBoard } from './render.js';
 
-const connectWS = (state) => {
+const configureWS = (state) => {
 	const ws = new WebSocket('wss://ottavhq.com:443');
 
 	ws.onopen = () => {
@@ -14,7 +14,9 @@ const connectWS = (state) => {
 
 		if(type === 'initialGameState') {
 			const gameState = JSON.parse(data);
-			state.otherPlayers = gameState;
+			state.otherPlayers = gameState.playerData;
+			state.board = gameState.board.map(row => [...row]);
+			state.mode = 'normal';
 		}
 
 		if(type === 'position') {
@@ -46,6 +48,14 @@ const connectWS = (state) => {
 			state.activeMessages.push(msg);
 		}
 
+		if(type === 'block') {
+			state.board[data.y][data.x] = data.ch;
+		}
+
+		if(type === 'board') {
+			state.board = data;
+			state.mode = state.prevMode;
+		}
 
 		updateBoard(state);
 		console.log('Message from server:', JSON.parse(event.data));
@@ -63,4 +73,4 @@ const connectWS = (state) => {
 
 	return ws;
 }
-export default connectWS;
+export default configureWS;

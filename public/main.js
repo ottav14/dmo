@@ -1,6 +1,6 @@
 import * as PARAMS from './params.js';
-import { updateBoard, initBoard } from './render.js';
-import connectWS from './connectWS.js';
+import { updateBoard } from './render.js';
+import configureWS from './configureWS.js';
 import { move, controls } from './controls.js';
 
 const loginWindow = document.getElementById('login');
@@ -19,11 +19,15 @@ nameInput.addEventListener('keypress', getName);
 const start = (name) => {
 	const state = {
 		name: name,
-		board: initBoard(),
+		board: [],
+		boardPosition: { x: 0, y: 0 },
 		container: container,
 		position: { x: 10, y: 10 },
 		player_ch: '@',
-		mode: 'walking',
+		mode: 'normal',
+		prevMode: 'normal',
+		direction: 'right',
+		block: '.',
 		message: '',
 		activeMessages: [],
 		activeBalls: [],
@@ -31,8 +35,7 @@ const start = (name) => {
 	}
 
 	// Open ws connection
-	const webSocketServer = connectWS(state);
-
+	const webSocketServer = configureWS(state);
 
 	updateBoard(state);
 
