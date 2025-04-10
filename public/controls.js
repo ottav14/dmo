@@ -16,8 +16,12 @@ const changeBoard = (state, xoff, yoff, webSocketServer) => {
 	if(xoff === -1) state.position.x = PARAMS.board_width-1;
 	if(yoff === 1) state.position.y = 0;
 	if(yoff === -1) state.position.y = PARAMS.board_height-1;
-	const positionMessage = { type: 'position', id: state.id, data: state.position };
-	webSocketServer.send(JSON.stringify(positionMessage));
+	const data = {
+		position: state.position,
+		player_ch: state.player_ch,
+	}
+	const message = { type: 'playerUpdate', id: state.id, data: data };
+	webSocketServer.send(JSON.stringify(message));
 }
 
 const getChar = (direction) => {
@@ -65,7 +69,11 @@ export const move = (state, xoff, yoff, webSocketServer) => {
 	   		newP.y >= 0 && newP.y < PARAMS.board_height &&
 	   !unwalkables.includes(state.board[newP.y][newP.x])) {
 		state.position = newP;
-		const message = { type: 'position', id: state.id, data: newP };
+		const data = {
+			position: state.position,
+			player_ch: state.player_ch,
+		}
+		const message = { type: 'playerUpdate', id: state.id, data: data };
 		webSocketServer.send(JSON.stringify(message));
 	}
 }
@@ -111,6 +119,27 @@ const shoot = (e, state, webSocketServer) => {
 
 }
 
+const toggleDirectional = (e, state, webSocketServer) => {
+	if(state.player_ch === '@') {
+		state.player_ch = getChar(state.direction);
+		const data = {
+			position: state.position,
+			player_ch: state.player_ch,
+		}
+		const message = { type: 'playerUpdate', id: state.id, data: data };
+		webSocketServer.send(JSON.stringify(message));
+	}
+	else {
+		state.player_ch = '@';
+		const data = {
+			position: state.position,
+			player_ch: state.player_ch,
+		}
+		const message = { type: 'playerUpdate', id: state.id, data: data };
+		webSocketServer.send(JSON.stringify(message));
+	}
+}
+
 const normalControls = (e, state, webSocketServer) => {
 	switch(e.key) {
 		case 'ArrowLeft':
@@ -139,12 +168,11 @@ const normalControls = (e, state, webSocketServer) => {
 			break;
 		case 'b':
 			state.mode = 'building';
-			state.player_ch = getChar(state.direction);
-			console.log(state.player_ch);
+			toggleDirectional(e, state, webSocketServer);
 			break;
 		case 'g':
 			state.mode = 'shooting';
-			state.player_ch = getChar(state.direction);
+			toggleDirectional(e, state, webSocketServer);
 			break;
 	}
 }
@@ -220,7 +248,7 @@ const buildingControls = (e, state, webSocketServer) => {
 			break;
 		case 'Escape':
 			state.mode = 'normal';
-			state.player_ch = '@';
+			toggleDirectional(e, state, webSocketServer);
 			break;
 	}
 }
@@ -274,7 +302,7 @@ const shootingControls = (e, state, webSocketServer) => {
 			break;
 		case 'Escape':
 			state.mode = 'normal';
-			state.player_ch = '@';
+			toggleDirectional(e, state, webSocketServer);
 			break;
 	}
 }

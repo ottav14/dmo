@@ -76,12 +76,11 @@ export const updateBoard = (state) => {
 	// Add other players
 	if(state.otherPlayers) {
 		for(const other of state.otherPlayers) {
-			const { id, position } = other;
+			const { id, position, player_ch } = other;
+			console.log('other:', other);
 			_board[position.y][position.x] = player_ch;
 		}
 	}
-
-
 
 	// Building block display
 	_board[PARAMS.board_height-2][PARAMS.board_width-2] = state.block;

@@ -19,11 +19,11 @@ const configureWS = (state) => {
 			state.mode = 'normal';
 		}
 
-		if(type === 'position') {
+		if(type === 'playerUpdate') {
 			for(let i=0; i<state.otherPlayers.length; i++) {
-				console.log(state.otherPlayers[i].id, id);
 				if(parseInt(state.otherPlayers[i].id) === id) {
-					state.otherPlayers[i].position = data;
+					state.otherPlayers[i].position = data.position;
+					state.otherPlayers[i].player_ch = data.player_ch;
 				}
 			}
 		}
@@ -31,7 +31,8 @@ const configureWS = (state) => {
 		if(type === 'connection') {
 			state.otherPlayers.push({
 				id: id,
-				position: data
+				position: data.position,
+				player_ch: data.player_ch,
 			});
 		}
 
@@ -49,7 +50,8 @@ const configureWS = (state) => {
 		}
 
 		if(type === 'block') {
-			state.board[data.y][data.x] = data.ch;
+			console.log('block:', data);
+			state.board[data.position.y][data.position.x] = data.ch;
 		}
 
 		if(type === 'board') {

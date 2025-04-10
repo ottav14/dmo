@@ -53,9 +53,13 @@ wss.on('connection', async (ws, req) => {
 	if(keys) {
 		for(const key of keys) {
 			if(!key.startsWith('board')) {
-				const data = await redis.hget(key, 'position');
-				const currentPos = JSON.parse(data);
-				playerData.push({ id: key, position: currentPos });
+				const data = await redis.hgetall(key);
+				const pos = JSON.parse(data.position);
+				playerData.push({ 
+					id: key, 
+					position: pos,
+					player_ch: data.player_ch,
+				});
 			}
 		}
 	}
@@ -70,13 +74,18 @@ wss.on('connection', async (ws, req) => {
 	ws.send(JSON.stringify(idMessage)); // Send client their id
 	
 	const position = { x: 10, y: 10 };
-	redis.hset(playerId, 'position', JSON.stringify(position)); // Add position to redis
+	redis.hset(playerId, 'position', JSON.stringify(position)); // Add initial state to redis
+	redis.hset(playerId, 'player_ch', '@');
 	
 
 	// Tell other players someone connected
 	clients.forEach(client => {
 		if(client !== ws && client.readyState === WebSocket.OPEN) {
-			client.send(JSON.stringify({ type: 'connection', id: playerId, data: position }));
+			const data = {
+				position: position,
+				player_ch: '@',
+			}
+			client.send(JSON.stringify({ type: 'connection', id: playerId, data: data }));
 		}
 	});
 
@@ -84,13 +93,14 @@ wss.on('connection', async (ws, req) => {
 		const { type, id, data } = JSON.parse(message);
 		console.log('Received:', JSON.parse(message));
 
-		if(type === 'position') {
+		if(type === 'playerUpdate') {
 			clients.forEach(client => {
 				if(client !== ws && client.readyState === WebSocket.OPEN) {
-					client.send(JSON.stringify({ type: 'position', id: id, data: data }));
+					client.send(JSON.stringify({ type: 'playerUpdate', id: id, data: data }));
 				}
 			});
-			await redis.hset(id, 'position', JSON.stringify(data));
+			await redis.hset(id, 'position', JSON.stringify(data.position));
+			await redis.hset(id, 'player_ch', data.player_ch);
 		}
 
 		if(type === 'block') {
