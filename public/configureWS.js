@@ -24,6 +24,7 @@ const configureWS = (state) => {
 				if(parseInt(state.otherPlayers[i].id) === id) {
 					state.otherPlayers[i].position = data.position;
 					state.otherPlayers[i].player_ch = data.player_ch;
+					state.otherPlayers[i].boardPosition = data.boardPosition;
 				}
 			}
 		}
@@ -33,6 +34,7 @@ const configureWS = (state) => {
 				id: id,
 				position: data.position,
 				player_ch: data.player_ch,
+				boardPosition: data.boardPosition,
 			});
 		}
 

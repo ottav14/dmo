@@ -1,6 +1,16 @@
 import * as PARAMS from './params.js';
 import { updateBoard } from './render.js';
 
+const sendPlayerUpdate = (state, webSocketServer) => {
+	const data = {
+		position: state.position,
+		boardPosition: state.boardPosition,
+		player_ch: state.player_ch,
+	}
+	const message = { type: 'playerUpdate', id: state.id, data: data };
+	webSocketServer.send(JSON.stringify(message));
+}
+
 const changeBoard = (state, xoff, yoff, webSocketServer) => {
 	state.prevMode = state.mode;
 	state.mode = 'loading';
@@ -8,20 +18,15 @@ const changeBoard = (state, xoff, yoff, webSocketServer) => {
 	// Update board position
 	state.boardPosition.x += xoff;
 	state.boardPosition.y += yoff;
-	const boardMessage = { type: 'boardJump', id: state.id, data: state.boardPosition };
-	webSocketServer.send(JSON.stringify(boardMessage));
 
 	// Update player position
 	if(xoff === 1) state.position.x = 0;
 	if(xoff === -1) state.position.x = PARAMS.board_width-1;
 	if(yoff === 1) state.position.y = 0;
 	if(yoff === -1) state.position.y = PARAMS.board_height-1;
-	const data = {
-		position: state.position,
-		player_ch: state.player_ch,
-	}
-	const message = { type: 'playerUpdate', id: state.id, data: data };
-	webSocketServer.send(JSON.stringify(message));
+
+	// Update server side data
+	sendPlayerUpdate(state, webSocketServer);
 }
 
 const getChar = (direction) => {
@@ -69,12 +74,7 @@ export const move = (state, xoff, yoff, webSocketServer) => {
 	   		newP.y >= 0 && newP.y < PARAMS.board_height &&
 	   !unwalkables.includes(state.board[newP.y][newP.x])) {
 		state.position = newP;
-		const data = {
-			position: state.position,
-			player_ch: state.player_ch,
-		}
-		const message = { type: 'playerUpdate', id: state.id, data: data };
-		webSocketServer.send(JSON.stringify(message));
+		sendPlayerUpdate(state, webSocketServer);
 	}
 }
 

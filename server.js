@@ -55,9 +55,11 @@ wss.on('connection', async (ws, req) => {
 			if(!key.startsWith('board')) {
 				const data = await redis.hgetall(key);
 				const pos = JSON.parse(data.position);
+				const boardPos = JSON.parse(data.boardPosition);
 				playerData.push({ 
 					id: key, 
 					position: pos,
+					boardPosition: boardPos,
 					player_ch: data.player_ch,
 				});
 			}
@@ -74,9 +76,10 @@ wss.on('connection', async (ws, req) => {
 	ws.send(JSON.stringify(idMessage)); // Send client their id
 	
 	const position = { x: 10, y: 10 };
+	const boardPosition = { x: 0, y: 0 };
 	redis.hset(playerId, 'position', JSON.stringify(position)); // Add initial state to redis
+	redis.hset(playerId, 'boardPosition', JSON.stringify(boardPosition));
 	redis.hset(playerId, 'player_ch', '@');
-	
 
 	// Tell other players someone connected
 	clients.forEach(client => {

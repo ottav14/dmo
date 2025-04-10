@@ -1,6 +1,6 @@
 import * as PARAMS from './params.js';
 
-const addGUI = (board) => {
+const addGUI = (board, state) => {
 
 	const width = PARAMS.display_width;
 	const height = PARAMS.display_height;
@@ -14,6 +14,9 @@ const addGUI = (board) => {
 
 	drawHLine(0, PARAMS.board_width-1, PARAMS.board_height, display);
 	drawVLine(0, height-1, PARAMS.board_width, display);
+
+	addModeDisplay(display, state.mode);
+	addBlockDisplay(display, state.block);
 
 	return display;
 
@@ -44,10 +47,16 @@ const addChatInput = (board, message) => {
 }
 
 const addModeDisplay = (board, mode) => {
+	const x = PARAMS.board_width-12;
 	const y = PARAMS.display_height-2;
-	const x = PARAMS.board_width-10;
 	for(let i=0; i<mode.length; i++)
 		board[y][x+i] = mode[i];
+}
+
+const addBlockDisplay = (board, block) => {
+	const x = PARAMS.board_width-2;
+	const y = PARAMS.display_height-2;
+	board[y][x] = block;
 }
 
 export const updateBoard = (state) => {
@@ -82,14 +91,9 @@ export const updateBoard = (state) => {
 		}
 	}
 
-	// Building block display
-	_board[PARAMS.board_height-2][PARAMS.board_width-2] = state.block;
 
 	// GUI 
-	const display = addGUI(_board);
-
-	// Mode display
-	addModeDisplay(display, state.mode);
+	const display = addGUI(_board, state);
 
 	// Message being typed
 	if(mode === 'typing')
