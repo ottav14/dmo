@@ -120,24 +120,8 @@ const shoot = (e, state, webSocketServer) => {
 }
 
 const toggleDirectional = (e, state, webSocketServer) => {
-	if(state.player_ch === '@') {
-		state.player_ch = getChar(state.direction);
-		const data = {
-			position: state.position,
-			player_ch: state.player_ch,
-		}
-		const message = { type: 'playerUpdate', id: state.id, data: data };
-		webSocketServer.send(JSON.stringify(message));
-	}
-	else {
-		state.player_ch = '@';
-		const data = {
-			position: state.position,
-			player_ch: state.player_ch,
-		}
-		const message = { type: 'playerUpdate', id: state.id, data: data };
-		webSocketServer.send(JSON.stringify(message));
-	}
+	state.player_ch = state.player_ch === '@' ? getChar(state.direction) : '@';
+	sendPlayerUpdate(state, webSocketServer);
 }
 
 const normalControls = (e, state, webSocketServer) => {

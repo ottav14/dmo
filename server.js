@@ -97,12 +97,34 @@ wss.on('connection', async (ws, req) => {
 		console.log('Received:', JSON.parse(message));
 
 		if(type === 'playerUpdate') {
+
+			if(await redis.exists(id)) {
+				const currentBP = await redis.hget(id, 'boardPosition');
+				const parsedBP = JSON.parse(currentBP);
+
+				// Handle board jumps
+				if(parsedBP.x !== data.boardPosition.x ||
+				   parsedBP.y !== data.boardPosition.y) {
+					
+					if(!(await redis.exists(`board:${data.boardPosition.x},${data.boardPosition.y}`)))
+						await initBoard(data.boardPosition.x, data.boardPosition.y);
+
+					console.log('current:', parsedBP);
+					console.log('new:', data.boardPosition);
+
+					const newBoard = await fetchBoard(data.boardPosition.x, data.boardPosition.y);
+					ws.send(JSON.stringify({ type: 'board', id: id, data: newBoard }));
+
+				}
+			}
+
 			clients.forEach(client => {
 				if(client !== ws && client.readyState === WebSocket.OPEN) {
 					client.send(JSON.stringify({ type: 'playerUpdate', id: id, data: data }));
 				}
 			});
 			await redis.hset(id, 'position', JSON.stringify(data.position));
+			await redis.hset(id, 'boardPosition', JSON.stringify(data.boardPosition));
 			await redis.hset(id, 'player_ch', data.player_ch);
 		}
 
@@ -126,14 +148,6 @@ wss.on('connection', async (ws, req) => {
 					client.send(JSON.stringify({ type: 'message', id: id, data: data }));
 				}
 			});
-		}
-
-		if(type === 'boardJump') {
-			if(!(await redis.exists(`board:${data.x},${data.y}`)))
-				await initBoard(data.x, data.y);
-
-			const newBoard = await fetchBoard(data.x, data.y);
-			ws.send(JSON.stringify({ type: 'board', id: id, data: newBoard }));
 		}
 
 	});

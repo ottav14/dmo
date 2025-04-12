@@ -85,9 +85,10 @@ export const updateBoard = (state) => {
 	// Add other players
 	if(state.otherPlayers) {
 		for(const other of state.otherPlayers) {
-			const { id, position, player_ch } = other;
-			console.log('other:', other);
-			_board[position.y][position.x] = player_ch;
+			const { id, position, boardPosition, player_ch } = other;
+			if(boardPosition.x === state.boardPosition.x &&
+			   boardPosition.y === state.boardPosition.y)
+				_board[position.y][position.x] = player_ch;
 		}
 	}
 
