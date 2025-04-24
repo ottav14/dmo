@@ -30,15 +30,19 @@ const fetchBoard = async (x, y) => {
 }
 
 const initBoard = async (x, y) => {
+
+	const pipeline = redis.pipeline();
+
 	for(let i=0; i<40; i++)
 		for(let j=0; j<100; j++)
-			await redis.hset(`board:${x},${y}`, `${j},${i}`, ' ');
+			pipeline.hset(`board:${x},${y}`, `${j},${i}`, ' ');
+
+	await pipeline.exec();
 }
 
 const initRedis = async () => {
 	await redis.flushdb();
 	await initBoard(0, 0);
-
 }
 initRedis();
 

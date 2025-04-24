@@ -23,19 +23,30 @@ const addGUI = (board, state) => {
 }
 
 const addMessages = (board, activeMessages) => {
+	let yoff = 0;
 	for(let i=activeMessages.length-1; i>=0; i--) {
-		const x = PARAMS.board_width+2;
-		const y = 2*(activeMessages.length - i) - 1;
+		let x = PARAMS.board_width+2;
+		let y = 2*(activeMessages.length-i) - 1 + yoff;
 
 		const name = activeMessages[i].name;
 		for(let j=0; j<name.length; j++)
 			board[y][x+j] = name[j];
 
-		board[y][x+name.length] = ':';
+		x += name.length;
+		board[y][x] = ':';
+		x += 2;
 
 		const msg = activeMessages[i].text;
-		for(let j=0; j<msg.length; j++)
-			board[y][x+name.length+j+2] = msg[j];
+		for(let j=0; j<msg.length; j++) {
+			// Line wrap
+			if(x >= PARAMS.display_width-1) {
+				x = PARAMS.board_width+2;
+				y++;
+				yoff++;
+			}
+			board[y][x] = msg[j];
+			x++;
+		}
 	}
 }
 
@@ -59,12 +70,20 @@ const addBlockDisplay = (board, block) => {
 	board[y][x] = block;
 }
 
+const validBoard = (board) => {
+	for(const row of board)
+		for(const item of row)
+			if(item === null)
+				return false
+	return true
+}
+
 export const updateBoard = (state) => {
 
 	if(state.board.length < 1)
 		return;
 
-	if(state.mode === 'loading') {
+	if(state.mode === 'loading' || !validBoard(state.board)) {
 		state.container.innerText = 'Loading...';
 		return;
 	}

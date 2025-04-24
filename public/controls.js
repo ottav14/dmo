@@ -190,7 +190,7 @@ const typingControls = (e, state, webSocketServer) => {
 			state.message = state.message.slice(0, -1);
 			break;
 		default:
-			if(e.key.length === 1)
+			if(e.key.length === 1 && state.message.length <= PARAMS.max_msg_len)
 				state.message += e.key;
 	}
 }
