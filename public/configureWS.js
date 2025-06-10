@@ -1,7 +1,7 @@
 import { updateBoard } from './render.js';
 
 const configureWS = (state) => {
-	const ws = new WebSocket('wss://ottavhq.com:443');
+	const ws = new WebSocket('wss://dmo.ottavhq.com');
 
 	ws.onopen = () => {
 		console.log('Connected to server');

@@ -1,20 +1,16 @@
 const express = require('express');
 const path = require('path');
-const https =  require('https');
+const http = require('http');
 const fs = require('fs');
 const WebSocket = require('ws');
 const Redis = require('ioredis');
 const app = express();
 
-const PORT = 443;
-const options = {
-	  key: fs.readFileSync("/etc/letsencrypt/live/ottavhq.com/privkey.pem"),
-	  cert: fs.readFileSync("/etc/letsencrypt/live/ottavhq.com/fullchain.pem"),
-};
+const PORT = 3000;
 
-const httpsServer = https.createServer(options, app);
-const wss = new WebSocket.Server({ server: httpsServer });
-const redis = new Redis();
+const httpServer = http.createServer(app);
+const wss = new WebSocket.Server({ server: httpServer });
+const redis = new Redis('redis://redis:6379');
 const clients = new Map();
 
 const fetchBoard = async (x, y) => {
@@ -177,6 +173,6 @@ app.get('/', (req, res) => {
 });
 
 // Start web server
-httpsServer.listen(PORT, () => {
-	console.log('https server running on https://ottavhq.com:443');
+httpServer.listen(PORT, '0.0.0.0', () => {
+	console.log(`http server running on http://localhost:${PORT}`);
 });

@@ -72,13 +72,24 @@ export const move = (state, xoff, yoff, webSocketServer) => {
 	else if(newP.y >= PARAMS.board_height) changeBoard(state, 0, 1, webSocketServer); 
 	else if(newP.x >= 0 && newP.x < PARAMS.board_width &&
 	   		newP.y >= 0 && newP.y < PARAMS.board_height &&
-	   !unwalkables.includes(state.board[newP.y][newP.x])) {
+	   		!unwalkables.includes(state.board[newP.y][newP.x])) {
 		state.position = newP;
 		sendPlayerUpdate(state, webSocketServer);
 	}
 }
 
-const placeBlock = (e, state, webSocketServer) => {
+const placeBlock = (state, webSocketServer) => {
+
+	if(state.shiftHeld) {
+		const x = state.position.x;
+		const y = state.position.y;
+		state.board[y][x] = state.block;
+		const edit = { position: { x: x, y: y }, boardPosition: state.boardPosition, ch: state.block };
+		const message = { type: 'block', id: state.id, data: edit };
+		webSocketServer.send(JSON.stringify(message));
+		return;
+	}
+
 	const directionKey = {
 		'up': [0, -1],
 		'down': [0, 1],
@@ -196,29 +207,30 @@ const typingControls = (e, state, webSocketServer) => {
 }
 
 const buildingControls = (e, state, webSocketServer) => {
-	switch(e.key) {
-		case 'ArrowLeft':
+
+	switch(e.key.toLowerCase()) {
+		case 'arrowleft':
 		case 'a':
 		case 'h':
 			move(state, -1, 0, webSocketServer);
 			break;
-		case 'ArrowDown':
+		case 'arrowdown':
 		case 's':
 		case 'j':
 			move(state, 0, 1, webSocketServer);
 			break;
-		case 'ArrowUp':
+		case 'arrowup':
 		case 'w':
 		case 'k':
 			move(state, 0, -1, webSocketServer);
 			break;
-		case 'ArrowRight':
+		case 'arrowright':
 		case 'd':
 		case 'l':
 			move(state, 1, 0, webSocketServer);
 			break;
 		case ' ':
-			placeBlock(e, state, webSocketServer);
+			placeBlock(state, webSocketServer);
 			break;
 		case ':':
 			state.prevMode = state.mode;
@@ -230,7 +242,7 @@ const buildingControls = (e, state, webSocketServer) => {
 		case 'g':
 			state.mode = 'shooting';
 			break;
-		case 'Escape':
+		case 'escape':
 			state.mode = 'normal';
 			toggleDirectional(e, state, webSocketServer);
 			break;

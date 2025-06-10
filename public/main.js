@@ -27,12 +27,22 @@ const start = (name) => {
 		mode: 'normal',
 		prevMode: 'normal',
 		direction: 'right',
+		shiftHeld: false,
 		block: '.',
 		message: '',
 		activeMessages: [],
 		activeBalls: [],
 		otherPlayers: []
 	}
+
+	document.addEventListener('keydown', (e) => {
+		if(e.key === 'Shift') state.shiftHeld = true;
+	});
+
+	document.addEventListener('keyup', (e) => {
+		if(e.key === 'Shift') state.shiftHeld = false;
+	});
+
 
 	// Open ws connection
 	const webSocketServer = configureWS(state);
